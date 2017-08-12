@@ -22,7 +22,7 @@ class Perceptron(object):
         for i in range(self.n_iter):
             error = 0
             for xi, target in zip(X_new, y):
-                predict_y = self.predict(xi)
+                predict_y = self.predict(xi, has_instercept=True)
                 update = self.eta * (target - predict_y)
                 self.w_ = self.w_ + update * xi
                 # int(True) => 1, int(False) => 0
@@ -32,8 +32,12 @@ class Perceptron(object):
     def net_input(self, x):
         return np.dot(self.w_, x)
 
-    def predict(self, x):
-        return np.where(self.net_input(x) >= 0.0, 1, -1)
+    def predict(self, x, has_instercept=False):
+        if has_instercept:
+            x_new = x
+        else:
+            x_new = self.add_ones(x)
+        return np.where(self.net_input(x_new) >= 0.0, 1, -1)
 
     def add_ones(self, x, how='column'):
         if how == 'column':
