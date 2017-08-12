@@ -4,7 +4,7 @@
 import numpy as np
 import pandas as pd
 
-class Perceptron(object):
+class AdalineGD(object):
 
     def __init__(self, eta=0.1, n_iter=10):
         self.eta = eta
@@ -16,22 +16,23 @@ class Perceptron(object):
         X_new = self.add_ones(X)
         self.w_ = np.zeros(X_new.shape[1])
 
-        # 各イテレーションで何サンプル誤分類したか
-        self.errors = []
+        self.cost = []
         
         for i in range(self.n_iter):
-            error = 0
-            for xi, target in zip(X_new, y):
-                predict_y = self.predict(xi, has_instercept=True)
-                update = self.eta * (target - predict_y)
-                self.w_ = self.w_ + update * xi
-                # int(True) => 1, int(False) => 0
-                error += int(update != 0.0)
-            self.errors.append(error)
+            output = self.net_input(X_new)
+            errors = y - self.activation(output)
+            delta_w = self.eta * np.dot(X_new.T, errors)
+            cost = 0.5 * (errors ** 2).sum()
+            self.cost.append(cost)
+        return self
+
 
     def net_input(self, x):
         return np.dot(x, self.w_)
 
+    def activation(self, x):
+        return x
+    
     def predict(self, x, has_instercept=False):
         if has_instercept:
             x_new = x
