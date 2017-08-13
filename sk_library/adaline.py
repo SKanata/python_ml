@@ -38,7 +38,7 @@ class AdalineGD(object):
             x_new = x
         else:
             x_new = self.add_ones(x)
-        return np.where(self.net_input(x_new) >= 0.0, 1, -1)
+        return np.where(self.activation(self.net_input(x_new)) >= 0.0, 1, -1)
 
     def add_ones(self, x, how='column'):
         if how == 'column':
