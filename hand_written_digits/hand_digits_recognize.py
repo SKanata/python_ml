@@ -48,7 +48,7 @@ nn = NeuralNetMLP(n_output=10,
                   random_state=1)
 
 nn.fit(X_train, y_train, print_progress=True)
-image = Image.open('./original_sample_3.png').convert('L')
+image = Image.open('./kawase_20170814.png').convert('L')
 image = image.resize((28, 28))
 image_array = np.asarray(ImageOps.invert(image), dtype='uint8')
 nn.predict(image_array.reshape(1,28*28))
