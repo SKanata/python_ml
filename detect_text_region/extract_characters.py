@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import pyocr
 import pyocr.builders
+import time
 from PIL import Image
 from sklearn.decomposition import RandomizedPCA
 from sklearn.externals import joblib
@@ -57,6 +58,7 @@ def flatten_image(img):
     return img_wide
 
 def main():
+    start_time = time.time()
     # 学習済みのSVMモデル
     svm = joblib.load('model.pkl')
 
@@ -65,7 +67,7 @@ def main():
 
     # 学習時に用いた標準化
     stdsc = joblib.load('stdsc.pkl')
-
+    read_time = time.time()
     img_path = sys.argv[1]
     #img_path = 'test_f2.png'
     header = 'pysushi_'
@@ -118,7 +120,12 @@ def main():
         builder=pyocr.builders.TextBuilder()
     )
     print("あとはラズパイで'%(txt)s'と打つだけだ！" % {'txt': txt})
-#    print(txt)
-
+    #    print(txt)
+    end_time = time.time()
+    print("load pkl time: %(load_pkl)s" % {'load_pkl': read_time - start_time})
+    print("detect time: %(detect)s" % {'detect': end_time - read_time })
+    print("total time: %(total)s" % {'total': end_time - start_time })
+    
+    
 if __name__ == '__main__':
     main()
