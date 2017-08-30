@@ -1,13 +1,16 @@
 #!/usr/bin/env python
+import time
 from PIL import Image
 import numpy as np
 import os
 import pandas as pd
 import pylab as pl
+from sklearn.pipeline import Pipeline
+from sklearn.grid_search import GridSearchCV
 from sklearn.decomposition import RandomizedPCA
 from sklearn.externals import joblib
 from sklearn.preprocessing import StandardScaler
-from sklearn.svm import LinearSVC, SVC
+from sklearn.svm import SVC
 from plot_decision_regions import plot_decision_regions
 import matplotlib.pyplot as plt
 
@@ -38,9 +41,11 @@ def flatten_image(img):
 
 
 def main():
+    start = time.time()
     img_dir = "output/"
     images = [img_dir + f for f in os.listdir(img_dir)]
     labels = ["ok" if "0020.png" in f.split('_')[-1] else "ng" for f in images]
+    np.random.seed(10)
     print(images)
     print(labels)
     
@@ -55,24 +60,42 @@ def main():
     y = np.where(np.array(labels) == 'ok', 1, 0)
     train_x, train_y = data[is_train], y[is_train]
     
-#    pca = RandomizedPCA(n_components=2)
-#    X = pca.fit_transform(data)
-#    df = pd.DataFrame({"x": X[:, 0], "y": X[:, 1], "label":np.where(y==1, "ok", "ng")})
-#    colors = ["red", "yellow"]
-#    for label, color in zip(df['label'].unique(), colors):
-#        mask = df['label']==label
-#        pl.scatter(df[mask]['x'], df[mask]['y'], c=color, label=label)
-#    pl.legend()
-#    pl.show()
-#
+    pipe_svc = Pipeline(
+        [
+            ('scl', StandardScaler()),
+            ('clf', SVC(random_state=0))
+        ]
+    )
+#    param_range = [0.0001]
+    param_range = [0.0001, 0.001, 0.01, 0.1, 1.0, 10.0, 100.0, 1000.0]
+    param_grid = [
+        {'clf__C': param_range, 'clf__kernel': ['linear']},
+        {'clf__C': param_range, 'clf__kernel': ['rbf'], 'clf__gamma': param_range}
+    ]
+
+    gs = GridSearchCV(
+        estimator=pipe_svc,
+        param_grid=param_grid,
+        scoring='accuracy',
+        cv=10,
+        n_jobs=-1
+    )
+
+    gs = gs.fit(train_x, train_y)
+    print(gs.best_score_)
+    print(gs.best_params_)
+    clf = gs.best_estimator_
+    clf.fit(train_x, train_y)
+    joblib.dump(clf, 'model.pkl')
+    test_x, test_y = data[is_train == False], y[is_train == False]
+    print(pd.crosstab(test_y, clf.predict(test_x), rownames=['Actual'], colnames=['Predicted']))
     
+    """
     # training a classifier
     pca = RandomizedPCA(n_components=2)
     stdsc = StandardScaler()
     train_x = pca.fit_transform(train_x)
     train_x_std = stdsc.fit_transform(train_x)
-#    train_x_std[:, 0] = (train_x[:, 0] - train_x[:, 0].mean()) / train_x[:, 0].std()
-#    train_x_std[:, 1] = (train_x[:, 1] - train_x[:, 1].mean()) / train_x[:, 1].std()
     svm = SVC(kernel='rbf', random_state=0, gamma=10.0, C=5.0)
     svm.fit(train_x_std, train_y)
     print(train_x_std)
@@ -85,11 +108,11 @@ def main():
     test_x, test_y = data[is_train == False], y[is_train == False]
     test_x = pca.transform(test_x)
     test_x_std = stdsc.transform(test_x)
-#    test_x_std[:, 0] = (test_x[:, 0] - test_x[:, 0].mean()) / test_x[:, 0].std()
-#    test_x_std[:, 1] = (test_x[:, 1] - test_x[:, 1].mean()) / test_x[:, 1].std()
     plt.show()
     print(pd.crosstab(test_y, svm.predict(test_x_std), rownames=['Actual'], colnames=['Predicted']))
-    
+"""    
+    end = time.time()
+    print('Elapsed time: %(time)s' % {'time': end - start})
 if __name__ == '__main__':
     main()
 

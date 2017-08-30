@@ -60,13 +60,8 @@ def flatten_image(img):
 def main():
     start_time = time.time()
     # 学習済みのSVMモデル
-    svm = joblib.load('model.pkl')
+    clf = joblib.load('model.pkl')
 
-    # 学習済みの主成分分析結果
-    pca = joblib.load('pca.pkl')
-
-    # 学習時に用いた標準化
-    stdsc = joblib.load('stdsc.pkl')
     read_time = time.time()
     img_path = sys.argv[1]
     #img_path = 'test_f2.png'
@@ -93,17 +88,12 @@ def main():
         #cv2.waitKey()
 
         # 一次元配列にする
-        img_wide = flatten_image(img_resized)
+        test_x = flatten_image(img_resized)
 
-        # 主成分分析で 2 次元の特徴量を持つデータに変換
-        test_x = pca.transform(img_wide)
-
-        # 標準化しないとメモリ溢れてプログラムが終了する
-        test_x_std = stdsc.transform(test_x)
-        print(output_filename + "_____" + str(svm.predict(test_x_std)))
+        print(output_filename + "_____" + str(clf.predict(test_x)))
 
         # 抽出対象を検出したら終了
-        if svm.predict(test_x_std)[0] == 1:
+        if clf.predict(test_x)[0] == 1:
             break
 
     # 抽出した領域に対して OCR かける   
@@ -113,7 +103,7 @@ def main():
         sys.exit(1)
     
     tool = tools[0]
-    
+    pil_img.show()
     txt = tool.image_to_string( # ここでOCRの対象や言語，オプションを指定する
         pil_img,
         lang='eng',
