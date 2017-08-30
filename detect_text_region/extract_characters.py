@@ -28,7 +28,7 @@ def detect_letters(img):
     ret, img_threshold = cv2.threshold(img_sobel, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
 
     # モルフォロジー処理
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(18, 18))
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(17, 3))
     img_morphology = cv2.morphologyEx(img_threshold, cv2.MORPH_CLOSE, kernel)
 
     # 輪郭抽出
@@ -40,7 +40,7 @@ def detect_letters(img):
     # contour で文字領域を切り出す
     bound_rect = []
     for contour in contours:
-        if contour.size > 100:
+        if contour.size > 800:
             # rect => (x, y, width, height)
             rect = cv2.boundingRect(cv2.approxPolyDP(contour, 3, True))
             if rect[2] > rect[3]:

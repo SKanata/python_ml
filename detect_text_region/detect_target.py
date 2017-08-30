@@ -77,7 +77,7 @@ def main():
     svm.fit(train_x_std, train_y)
     print(train_x_std)
     print(train_y)
-    plot_decision_regions(train_x_std, train_y, classifier=svm)
+#    plot_decision_regions(train_x_std, train_y, classifier=svm)
     joblib.dump(svm, 'model.pkl')
     joblib.dump(pca, 'pca.pkl')
     joblib.dump(stdsc, 'stdsc.pkl')
