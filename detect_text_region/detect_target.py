@@ -5,6 +5,7 @@ import numpy as np
 import os
 import pandas as pd
 import pylab as pl
+import cv2
 from sklearn.pipeline import Pipeline
 from sklearn.grid_search import GridSearchCV
 from sklearn.decomposition import RandomizedPCA
@@ -35,8 +36,13 @@ def flatten_image(img):
     takes in an (m, n) numpy array and flattens it 
     into an array of shape (1, m * n)
     """
-    s = img.shape[0] * img.shape[1] * img.shape[2]
-    img_wide = img.reshape(1, s)
+    img_gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    ret, img_binary = cv2.threshold(img_gray, 200, 255, cv2.THRESH_BINARY)
+
+    s = img_binary.shape[0] * img_binary.shape[1]
+#    cv2.imshow('a', img_binary)
+#    cv2.waitKey()
+    img_wide = img_binary.reshape(1, s)
     return img_wide[0]
 
 

@@ -57,6 +57,19 @@ def flatten_image(img):
     img_wide = img.reshape(1, s)
     return img_wide
 
+def flatten_image(img):
+    """
+    takes in an (m, n) numpy array and flattens it 
+    into an array of shape (1, m * n)
+    """
+    img_gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    ret, img_binary = cv2.threshold(img_gray, 200, 255, cv2.THRESH_BINARY)
+
+    s = img_binary.shape[0] * img_binary.shape[1]
+    img_wide = img_binary.reshape(1, s)
+    return img_wide[0]
+
+
 def main():
     start_time = time.time()
     # 学習済みのSVMモデル
