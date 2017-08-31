@@ -67,7 +67,7 @@ def flatten_image(img):
 
     s = img_binary.shape[0] * img_binary.shape[1]
     img_wide = img_binary.reshape(1, s)
-    return img_wide[0]
+    return img_wide
 
 
 def main():
