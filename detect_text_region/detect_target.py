@@ -63,21 +63,23 @@ def main():
     pipe_svc = Pipeline(
         [
             ('scl', StandardScaler()),
+            ('pca', (RandomizedPCA())),
             ('clf', SVC(random_state=0))
         ]
     )
 #    param_range = [0.0001]
     param_range = [0.0001, 0.001, 0.01, 0.1, 1.0, 10.0, 100.0, 1000.0]
+
     param_grid = [
-        {'clf__C': param_range, 'clf__kernel': ['linear']},
-        {'clf__C': param_range, 'clf__kernel': ['rbf'], 'clf__gamma': param_range}
+        {"pca__n_components" : list(range(2, 6)), 'clf__C': param_range, 'clf__kernel': ['linear']},
+        {"pca__n_components" : list(range(2, 6)), 'clf__C': param_range, 'clf__kernel': ['rbf'], 'clf__gamma': param_range}
     ]
 
     gs = GridSearchCV(
         estimator=pipe_svc,
         param_grid=param_grid,
         scoring='accuracy',
-        cv=10,
+        cv=5,
         n_jobs=-1
     )
 

@@ -40,10 +40,10 @@ def detect_letters(img):
     # contour で文字領域を切り出す
     bound_rect = []
     for contour in contours:
-        if contour.size > 800:
+        if contour.size > 600:
             # rect => (x, y, width, height)
             rect = cv2.boundingRect(cv2.approxPolyDP(contour, 3, True))
-            if rect[2] > rect[3]:
+            if rect[2]  > rect[3] * 2:
                 bound_rect.append(rect)
 
     return bound_rect
@@ -64,6 +64,7 @@ def main():
 
     read_time = time.time()
     img_path = sys.argv[1]
+    margin = 5
     #img_path = 'test_f2.png'
     header = 'pysushi_'
     img = cv2.imread(img_path)
@@ -71,11 +72,11 @@ def main():
 
     # 抽出した文字領域を走査し、抽出対象領域を判定
     for num, box in enumerate(letter_boxes):
-        output_filename = "output/%s%04d.png" % (header, num)
+        output_filename = "extract_tmp_output/%s%04d.png" % (header, num)
 
         # Caution: numpy syntax expects [y:y+h, x:x+w]
-        img_trimed = img[box[1]:box[1]+box[3], box[0]:box[0]+box[2]]
-        #cv2.imwrite(output_filename, img_trimed)
+        img_trimed = img[box[1]-margin:box[1]+box[3]+margin, box[0]-margin:box[0]+box[2]+margin]
+        cv2.imwrite(output_filename, img_trimed)
 
         # サイズを揃えるために一旦 PIL 形式に変換
         # モデルは STANDARD_SIZE で学習済み
@@ -104,8 +105,12 @@ def main():
     
     tool = tools[0]
     pil_img.show()
+    img_gray = cv2.cvtColor(img_trimed, cv2.COLOR_RGB2GRAY)
+    ret, img_binary = cv2.threshold(img_gray, 200, 255, cv2.THRESH_BINARY)
+    pil_img_binaly = Image.fromarray(np.uint8(img_binary))
+    pil_img_binaly.show()
     txt = tool.image_to_string( # ここでOCRの対象や言語，オプションを指定する
-        pil_img,
+        pil_img_binaly,
         lang='eng',
         builder=pyocr.builders.TextBuilder()
     )
