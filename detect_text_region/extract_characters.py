@@ -11,6 +11,7 @@ from sklearn.decomposition import RandomizedPCA
 from sklearn.externals import joblib
 
 STANDARD_SIZE = (300, 40)
+BINARY_THRESHOLD = 200
 
 def detect_letters(img):
     """
@@ -40,7 +41,7 @@ def detect_letters(img):
     # contour で文字領域を切り出す
     bound_rect = []
     for contour in contours:
-        if contour.size > 600:
+        if contour.size > 1000:
             # rect => (x, y, width, height)
             rect = cv2.boundingRect(cv2.approxPolyDP(contour, 3, True))
             if rect[2]  > rect[3] * 2:
@@ -104,11 +105,27 @@ def main():
         sys.exit(1)
     
     tool = tools[0]
-    pil_img.show()
+    cv2.imshow('trimed', img_trimed)
+    cv2.waitKey()
+
     img_gray = cv2.cvtColor(img_trimed, cv2.COLOR_RGB2GRAY)
-    ret, img_binary = cv2.threshold(img_gray, 200, 255, cv2.THRESH_BINARY)
+    cv2.imwrite('01_gray_' + img_path, img_trimed)
+    cv2.imshow('gray', img_gray)
+    cv2.waitKey()
+    
+    ret, img_binary = cv2.threshold(img_gray, BINARY_THRESHOLD, 255, cv2.THRESH_BINARY)
+    cv2.imshow('binary', img_binary)
+    cv2.waitKey()
+    cv2.imwrite('02_binary_%(thresh)s_%(img_path)s' % {'thresh': BINARY_THRESHOLD, 'img_path': img_path}, img_binary) 
+
+    # モルフォロジー処理
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(2, 1))
+    img_binary = cv2.erode(img_binary,kernel,iterations = 1) 
+#    img_binary = cv2.morphologyEx(img_binary, cv2.MORPH_CLOSE, kernel)
+    cv2.imwrite('03_morpho_%(thresh)s_%(img_path)s' % {'thresh': BINARY_THRESHOLD, 'img_path': img_path}, img_binary) 
+    cv2.imshow('thresh', img_binary)
+    cv2.waitKey()
     pil_img_binaly = Image.fromarray(np.uint8(img_binary))
-    pil_img_binaly.show()
     txt = tool.image_to_string( # ここでOCRの対象や言語，オプションを指定する
         pil_img_binaly,
         lang='eng',
