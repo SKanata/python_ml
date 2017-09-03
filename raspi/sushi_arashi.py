@@ -7,13 +7,14 @@ import numpy as np
 import pyocr
 import pyocr.builders
 import time
+import traceback
 from picamera.array import PiRGBArray
 from picamera import PiCamera
 from PIL import Image
 from sklearn.decomposition import RandomizedPCA
 from sklearn.externals import joblib
 
-STANDARD_SIZE = (300, 40)
+STANDARD_SIZE = (400, 40)
 BINARY_THRESHOLD = 200
 
 def detect_letters(img):
@@ -44,7 +45,7 @@ def detect_letters(img):
     # contour で文字領域を切り出す
     bound_rect = []
     for contour in contours:
-        if contour.size > 1000:
+        if contour.size > 700:
             # rect => (x, y, width, height)
             rect = cv2.boundingRect(cv2.approxPolyDP(contour, 3, True))
             if rect[2]  > rect[3] * 2:
@@ -109,28 +110,34 @@ def main():
         sys.exit(1)
     tool = tools[0]
 
-    # initialize the camera and grab a reference to the raw camera capture
-    camera = PiCamera()
-    camera.resolution = (2592, 1952)
-    #    camera.resolution = (3280, 2464)
-    camera.start_preview()
-    time.sleep(2)
 
     # 学習済みのSVMモデル
     clf = joblib.load('model.pkl')
     margin = 5
     i = 0
-    while True:
-        with PiRGBArray(camera) as stream:
-            camera.capture(stream, format='bgr')
-            # At this point the image is available as stream.array
-            img = stream.array
-        #        img = frame.array
-        cv2.imwrite('capture_%(i)s.png' % {'i': i}, img)
-        extract_characters(img, clf, margin, tool)
-        time.sleep(1)
-        i += 1
-        #        rawCapture.truncate(0)
+    # initialize the camera and grab a reference to the raw camera capture
+    camera = PiCamera()
+    camera.resolution = (2592, 1952)
+    #    camera.resolution = (3280, 2464)
+    try:
+        camera.start_preview()
+        time.sleep(5)
+        camera.stop_preview()
+        a = input('Ready. Please press any key to start.')
+        while True:
+            with PiRGBArray(camera) as stream:
+                camera.capture(stream, format='bgr')
+                # At this point the image is available as stream.array
+                img = stream.array
+                #        img = frame.array
+            cv2.imwrite('capture_%(i)s.png' % {'i': i}, img)
+            extract_characters(img, clf, margin, tool)
+            i += 1
+    except:
+        print(traceback.format_exc())
+
+#    finally:
+#        camera.stop_preview()
 
 if __name__ == '__main__':
     main()

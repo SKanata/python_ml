@@ -10,7 +10,7 @@ from PIL import Image
 from sklearn.decomposition import RandomizedPCA
 from sklearn.externals import joblib
 
-STANDARD_SIZE = (300, 40)
+STANDARD_SIZE = (400, 40)
 BINARY_THRESHOLD = 200
 
 def detect_letters(img):
@@ -41,7 +41,7 @@ def detect_letters(img):
     # contour で文字領域を切り出す
     bound_rect = []
     for contour in contours:
-        if contour.size > 1000:
+        if contour.size > 700:
             # rect => (x, y, width, height)
             rect = cv2.boundingRect(cv2.approxPolyDP(contour, 3, True))
             if rect[2]  > rect[3] * 2:
@@ -118,13 +118,6 @@ def main():
     cv2.waitKey()
     cv2.imwrite('02_binary_%(thresh)s_%(img_path)s' % {'thresh': BINARY_THRESHOLD, 'img_path': img_path}, img_binary) 
 
-    # モルフォロジー処理
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(2, 1))
-    img_binary = cv2.erode(img_binary,kernel,iterations = 1) 
-#    img_binary = cv2.morphologyEx(img_binary, cv2.MORPH_CLOSE, kernel)
-    cv2.imwrite('03_morpho_%(thresh)s_%(img_path)s' % {'thresh': BINARY_THRESHOLD, 'img_path': img_path}, img_binary) 
-    cv2.imshow('thresh', img_binary)
-    cv2.waitKey()
     pil_img_binaly = Image.fromarray(np.uint8(img_binary))
     txt = tool.image_to_string( # ここでOCRの対象や言語，オプションを指定する
         pil_img_binaly,
