@@ -14,7 +14,7 @@ from sklearn.svm import SVC
 from plot_decision_regions import plot_decision_regions
 import matplotlib.pyplot as plt
 
-STANDARD_SIZE = (300, 40)
+STANDARD_SIZE = (400, 40)
 
 def img_to_matrix(filename, verbose=False):
     """
@@ -79,7 +79,7 @@ def main():
         estimator=pipe_svc,
         param_grid=param_grid,
         scoring='accuracy',
-        cv=5,
+        cv=10,
         n_jobs=-1
     )
 
