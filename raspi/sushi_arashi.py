@@ -8,6 +8,7 @@ import pyocr
 import pyocr.builders
 import time
 import traceback
+from hitman import Hitman
 from picamera.array import PiRGBArray
 from picamera import PiCamera
 from PIL import Image
@@ -100,7 +101,8 @@ def extract_characters(img, clf, margin, tool):
         builder=pyocr.builders.TextBuilder()
     )
     print("あとはラズパイで'%(txt)s'と打つだけだ！" % {'txt': txt})
-    
+
+    return txt
 
 def main():
     # OCR のロード
@@ -110,6 +112,7 @@ def main():
         sys.exit(1)
     tool = tools[0]
 
+    hitman = Hitman()
 
     # 学習済みのSVMモデル
     clf = joblib.load('model.pkl')
@@ -131,7 +134,8 @@ def main():
                 img = stream.array
                 #        img = frame.array
             cv2.imwrite('capture_%(i)s.png' % {'i': i}, img)
-            extract_characters(img, clf, margin, tool)
+            txt = extract_characters(img, clf, margin, tool)
+            hitman.hit_keys(txt, 0.07)
             i += 1
     except:
         print(traceback.format_exc())

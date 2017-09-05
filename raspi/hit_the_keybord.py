@@ -73,6 +73,6 @@ bus.write_byte_data(ICADDR_2, REG_OLAT_B, 0x00)
 for i in word:
     print('Hitting the key: %(word)s. ' % {'word': i})
     bus.write_byte_data(icaddr[i], register[i], alphabet[i])
-    time.sleep(0.3)
+    time.sleep(0.01)
     bus.write_byte_data(icaddr[i], register[i], 0x00)
 #    time.sleep(0.1)
