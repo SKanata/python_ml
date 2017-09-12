@@ -6,8 +6,9 @@ import os
 import pandas as pd
 import pylab as pl
 from sklearn.pipeline import Pipeline
-from sklearn.grid_search import GridSearchCV
-from sklearn.decomposition import RandomizedPCA
+#from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
+from sklearn.decomposition import PCA
 from sklearn.externals import joblib
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
@@ -46,8 +47,8 @@ def main():
     images = [img_dir + f for f in os.listdir(img_dir)]
     labels = ["ok" if "0020.png" in f.split('_')[-1] else "ng" for f in images]
     np.random.seed(10)
-    print(images)
-    print(labels)
+#    print(images)
+#    print(labels)
     
     data = []
     for image in images:
@@ -58,16 +59,15 @@ def main():
     data = np.array(data)
     is_train = np.random.uniform(0, 1, len(data)) <= 0.7
     y = np.where(np.array(labels) == 'ok', 1, 0)
-    train_x, train_y = data[is_train], y[is_train]
-    
+    train_x, train_y = data[is_train].astype(float), y[is_train]#.astype(float)
     pipe_svc = Pipeline(
         [
             ('scl', StandardScaler()),
-            ('pca', (RandomizedPCA())),
+            ('pca', (PCA(svd_solver='randomized'))),
             ('clf', SVC(random_state=0))
         ]
     )
-#    param_range = [0.0001]
+
     param_range = [0.0001, 0.001, 0.01, 0.1, 1.0, 10.0, 100.0, 1000.0]
 
     param_grid = [
@@ -80,10 +80,12 @@ def main():
         param_grid=param_grid,
         scoring='accuracy',
         cv=10,
-        n_jobs=-1
+        n_jobs=-1,
+        verbose=1
     )
 
     gs = gs.fit(train_x, train_y)
+
     print(gs.best_score_)
     print(gs.best_params_)
     clf = gs.best_estimator_
@@ -91,28 +93,7 @@ def main():
     joblib.dump(clf, 'model.pkl')
     test_x, test_y = data[is_train == False], y[is_train == False]
     print(pd.crosstab(test_y, clf.predict(test_x), rownames=['Actual'], colnames=['Predicted']))
-    
-    """
-    # training a classifier
-    pca = RandomizedPCA(n_components=2)
-    stdsc = StandardScaler()
-    train_x = pca.fit_transform(train_x)
-    train_x_std = stdsc.fit_transform(train_x)
-    svm = SVC(kernel='rbf', random_state=0, gamma=10.0, C=5.0)
-    svm.fit(train_x_std, train_y)
-    print(train_x_std)
-    print(train_y)
-#    plot_decision_regions(train_x_std, train_y, classifier=svm)
-    joblib.dump(svm, 'model.pkl')
-    joblib.dump(pca, 'pca.pkl')
-    joblib.dump(stdsc, 'stdsc.pkl')
-    # evaluating the model
-    test_x, test_y = data[is_train == False], y[is_train == False]
-    test_x = pca.transform(test_x)
-    test_x_std = stdsc.transform(test_x)
-    plt.show()
-    print(pd.crosstab(test_y, svm.predict(test_x_std), rownames=['Actual'], colnames=['Predicted']))
-"""    
+
     end = time.time()
     print('Elapsed time: %(time)s' % {'time': end - start})
 if __name__ == '__main__':
