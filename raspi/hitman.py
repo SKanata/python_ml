@@ -47,10 +47,10 @@ class Hitman(object):
 
     def initialize(self):
         # ピンの入出力設定
-        self.bus.write_byte_data(self.ICADDR_1, self.REG_OLAT_A, 0x00)
-        self.bus.write_byte_data(self.ICADDR_1, self.REG_OLAT_B, 0x00)
-        self.bus.write_byte_data(self.ICADDR_2, self.REG_OLAT_A, 0x00)
-        self.bus.write_byte_data(self.ICADDR_2, self.REG_OLAT_B, 0x00)
+        self.bus.write_byte_data(self.ICADDR_1, self.REG_IODIR_A, 0x00)
+        self.bus.write_byte_data(self.ICADDR_1, self.REG_IODIR_B, 0x00)
+        self.bus.write_byte_data(self.ICADDR_2, self.REG_IODIR_A, 0x00)
+        self.bus.write_byte_data(self.ICADDR_2, self.REG_IODIR_B, 0x00)
 
     def hit_keys(self, word, interval=0.3):
         for i in word:

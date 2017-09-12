@@ -65,14 +65,14 @@ bus = smbus.SMBus(CHANNEL)
 word = sys.argv[1]
 
 # ピンの入出力設定
-bus.write_byte_data(ICADDR_1, REG_OLAT_A, 0x00)
-bus.write_byte_data(ICADDR_1, REG_OLAT_B, 0x00)
-bus.write_byte_data(ICADDR_2, REG_OLAT_A, 0x00)
-bus.write_byte_data(ICADDR_2, REG_OLAT_B, 0x00)
+bus.write_byte_data(ICADDR_1, REG_IODIR_A, 0x00)
+bus.write_byte_data(ICADDR_1, REG_IODIR_B, 0x00)
+bus.write_byte_data(ICADDR_2, REG_IODIR_A, 0x00)
+bus.write_byte_data(ICADDR_2, REG_IODIR_B, 0x00)
 
 for i in word:
     print('Hitting the key: %(word)s. ' % {'word': i})
     bus.write_byte_data(icaddr[i], register[i], alphabet[i])
-    time.sleep(0.01)
+    time.sleep(1)
     bus.write_byte_data(icaddr[i], register[i], 0x00)
 #    time.sleep(0.1)
