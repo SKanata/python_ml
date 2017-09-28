@@ -8,6 +8,7 @@ import pyocr
 import pyocr.builders
 import time
 import traceback
+import re
 from hitman import Hitman
 from picamera.array import PiRGBArray
 from picamera import PiCamera
@@ -17,6 +18,64 @@ from sklearn.externals import joblib
 
 STANDARD_SIZE = (400, 40)
 BINARY_THRESHOLD = 200
+
+class MyTextBuilder(pyocr.builders.BaseBuilder):
+    """
+    If passed to image_to_string(), image_to_string() will return a simple
+    string. This string will be the output of the OCR tool, as-is. In other
+    words, the raw text as produced by the tool.
+    Warning:
+        The returned string is encoded in UTF-8
+    """
+
+    def __init__(self, tesseract_layout=3, cuneiform_dotmatrix=False,
+                 cuneiform_fax=False, cuneiform_singlecolumn=False):
+        file_ext = ["txt"]
+        tess_flags = ["-psm", str(tesseract_layout)]
+        cun_args = ["-f", "text"]
+        # Add custom cuneiform parameters if needed
+        for par, arg in [(cuneiform_dotmatrix, "--dotmatrix"),
+                         (cuneiform_fax, "--fax"),
+                         (cuneiform_singlecolumn, "--singlecolumn")]:
+            if par:
+                cun_args.append(arg)
+        super(MyTextBuilder, self).__init__(file_ext, tess_flags, ["-c", "tessedit_char_whitelist=qwertyuiopasdfghjklzxcvbnm,-"], cun_args)
+        self.tesseract_layout = tesseract_layout
+        self.built_text = []
+
+    @staticmethod
+    def read_file(file_descriptor):
+        """
+        Read a file and extract the content as a string.
+        """
+        return file_descriptor.read().strip()
+
+    @staticmethod
+    def write_file(file_descriptor, text):
+        """
+        Write a string in a file.
+        """
+        file_descriptor.write(text)
+
+    def start_line(self, box):
+        self.built_text.append(u"")
+
+    def add_word(self, word, box):
+        if self.built_text[-1] != u"":
+            self.built_text[-1] += u" "
+        self.built_text[-1] += word
+
+    def end_line(self):
+        pass
+
+    def get_output(self):
+        return u"\n".join(self.built_text)
+
+    @staticmethod
+    def __str__():
+        return "Raw text"
+
+
 
 def detect_letters(img):
     """
@@ -98,8 +157,9 @@ def extract_characters(img, clf, margin, tool):
     txt = tool.image_to_string( # ここでOCRの対象や言語，オプションを指定する
         pil_img_binaly,
         lang='eng',
-        builder=pyocr.builders.TextBuilder()
+        builder=MyTextBuilder()
     )
+    txt = txt.replace(" ", "")
     print("あとはラズパイで'%(txt)s'と打つだけだ！" % {'txt': txt})
 
     return txt
@@ -113,7 +173,7 @@ def main():
     tool = tools[0]
 
     hitman = Hitman()
-
+    hitman.initialize()
     # 学習済みのSVMモデル
     clf = joblib.load('model.pkl')
     margin = 5
