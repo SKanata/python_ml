@@ -9,6 +9,7 @@ import pyocr.builders
 import time
 import traceback
 import re
+import RPi.GPIO as GPIO
 from hitman import Hitman
 from picamera.array import PiRGBArray
 from picamera import PiCamera
@@ -18,6 +19,8 @@ from sklearn.externals import joblib
 
 STANDARD_SIZE = (400, 40)
 BINARY_THRESHOLD = 200
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(14, GPIO.IN)
 
 class MyTextBuilder(pyocr.builders.BaseBuilder):
     """
@@ -75,7 +78,9 @@ class MyTextBuilder(pyocr.builders.BaseBuilder):
     def __str__():
         return "Raw text"
 
-
+def handler(signal, frame):
+    print('マスターコマンド発動。死戻り。')
+    goto .RETRY
 
 def detect_letters(img):
     """
@@ -85,7 +90,7 @@ def detect_letters(img):
     
     # グレースケールに変換
     img_gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-
+    
     # エッジ検出
     img_sobel = cv2.Sobel(img_gray, cv2.CV_8U, 1, 0) #, 3, 1, 0, cv2.BORDER_DEFAULT)
 
@@ -152,6 +157,7 @@ def extract_characters(img, clf, margin, tool):
 
     # 抽出した領域に対して OCR かける       
     img_gray = cv2.cvtColor(img_trimed, cv2.COLOR_RGB2GRAY)
+
     ret, img_binary = cv2.threshold(img_gray, BINARY_THRESHOLD, 255, cv2.THRESH_BINARY) #+cv2.THRESH_OTSU)
     pil_img_binaly = Image.fromarray(np.uint8(img_binary))
     txt = tool.image_to_string( # ここでOCRの対象や言語，オプションを指定する
@@ -180,9 +186,11 @@ def main():
     i = 0
     # initialize the camera and grab a reference to the raw camera capture
     camera = PiCamera()
+#    camera.resolution = (2000, 1500)
     camera.resolution = (2592, 1952)
     #    camera.resolution = (3280, 2464)
     try:
+        camera.contrast = 70
         camera.start_preview()
         time.sleep(5)
         camera.stop_preview()
@@ -193,10 +201,20 @@ def main():
                 # At this point the image is available as stream.array
                 img = stream.array
                 #        img = frame.array
-            cv2.imwrite('capture_%(i)s.png' % {'i': i}, img)
+            if GPIO.input(14) == GPIO.HIGH:
+                #緊急脱出
+                print('システムコマンド発動。画像処理前から最初へ死戻り。')
+                continue
+            # cv2.imwrite('capture_%(i)s.png' % {'i': i}, img)
             txt = extract_characters(img, clf, margin, tool)
-            hitman.hit_keys(txt, 0.07)
-            i += 1
+            if GPIO.input(14) == GPIO.HIGH:
+                #緊急脱出
+                print('システムコマンド発動。打鍵前から最初へ死戻り。')
+                continue
+            hitman.hit_keys(txt, 0.02)
+            print('end. next!!!!!!!!!!!!!!!!!')
+            time.sleep(0.3)#成功したときに、画面の切り替わりに時間がかかる
+            #i += 1
     except:
         print(traceback.format_exc())
 
