@@ -110,7 +110,7 @@ def detect_letters(img):
     # contour で文字領域を切り出す
     bound_rect = []
     for contour in contours:
-        if contour.size > 700:
+        if contour.size > 300:
             # rect => (x, y, width, height)
             rect = cv2.boundingRect(cv2.approxPolyDP(contour, 3, True))
             if rect[2]  > rect[3] * 2:
@@ -182,19 +182,19 @@ def main():
     hitman.initialize()
     # 学習済みのSVMモデル
     clf = joblib.load('model.pkl')
-    margin = 5
+    margin = 7
     i = 0
     # initialize the camera and grab a reference to the raw camera capture
     camera = PiCamera()
-#    camera.resolution = (2000, 1500)
-    camera.resolution = (2592, 1952)
-    #    camera.resolution = (3280, 2464)
+    camera.resolution = (1408, 944)
+#    camera.resolution = (2592, 1952)
+#    camera.resolution = (3280, 2464)
     try:
         camera.contrast = 70
         camera.start_preview()
         time.sleep(5)
         camera.stop_preview()
-        a = input('Ready. Please press any key to start.')
+        a = input('Ready. Please press return to start.')
         while True:
             with PiRGBArray(camera) as stream:
                 camera.capture(stream, format='bgr')
@@ -203,17 +203,14 @@ def main():
                 #        img = frame.array
             if GPIO.input(14) == GPIO.HIGH:
                 #緊急脱出
-                print('システムコマンド発動。画像処理前から最初へ死戻り。')
+                print('ウィザードモード発動！')
+                #自作タイピングゲームでは、カンマを入力すると文字をスキップできる
+                hitman.hit_keys(',', 0.01)
                 continue
-            # cv2.imwrite('capture_%(i)s.png' % {'i': i}, img)
             txt = extract_characters(img, clf, margin, tool)
-            if GPIO.input(14) == GPIO.HIGH:
-                #緊急脱出
-                print('システムコマンド発動。打鍵前から最初へ死戻り。')
-                continue
             hitman.hit_keys(txt, 0.02)
             print('end. next!!!!!!!!!!!!!!!!!')
-            time.sleep(0.3)#成功したときに、画面の切り替わりに時間がかかる
+            time.sleep(0.2)#成功したときに、画面の切り替わりに時間がかかる
             #i += 1
     except:
         print(traceback.format_exc())
